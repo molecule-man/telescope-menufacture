@@ -2,6 +2,10 @@
 
 `telescope-menufacture.nvim` is an extension for [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim). It extends built-in pickers (`find_files`, `live_grep` and `grep_string`) with the menu that allows to toggle/change such picker options as include hidden dirs, include ignored files, search in particular folders etc.
 
+# Demo
+
+![Demo](https://user-images.githubusercontent.com/1415116/217057418-599761f2-0487-475e-9fce-4ed6352a0547.gif)
+
 
 # Installation
 
