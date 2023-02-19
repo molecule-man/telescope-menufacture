@@ -1,6 +1,6 @@
-# telescope-menufacture.nvim
+# telescope-menufacture
 
-`telescope-menufacture.nvim` is an extension for [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim). It extends built-in pickers (`find_files`, `live_grep` and `grep_string`) with the menu that allows to toggle/change such picker options as include hidden dirs, include ignored files, search in particular folders etc.
+`telescope-menufacture` is an extension for [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim). It extends built-in pickers (`find_files`, `live_grep` and `grep_string`) with the menu that allows to toggle/change such picker options as include hidden dirs, include ignored files, search in particular folders etc.
 
 # Demo
 
@@ -10,7 +10,7 @@
 
 ```lua
 -- install as usual e.g. with packer
-use { "nvim-telescope/telescope-menufacture.nvim" }
+use { "nvim-telescope/telescope-menufacture" }
 
 -- To get telescope-menufacture loaded and working with telescope,
 -- you need to call load_extension:
