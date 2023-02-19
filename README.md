@@ -10,11 +10,11 @@
 
 ```lua
 -- install as usual e.g. with packer
-use { "nvim-telescope/telescope-menufacture" }
+use { 'molecule-man/telescope-menufacture' }
 
 -- To get telescope-menufacture loaded and working with telescope,
 -- you need to call load_extension:
-require("telescope").load_extension "menufacture"
+require('telescope').load_extension 'menufacture'
 ```
 
 # Usage
