@@ -71,6 +71,28 @@ vim.keymap.set(
 )
 ```
 
+## Add your own menu item
+
+It's possible to add your own menu items. To do that you have to extend (or create new one from scratch) the list of menu items with your additional menu entries and corresponding actions. The action takes picker's `opts` as the first argument and `callback` as the second argument. The `callback` must be called with `opts` in the end of the action. Let's add menu item that changes `cwd` to the parent of the current `cwd`:
+
+```lua
+vim.keymap.set(
+  'n',
+  '<leader>sf',
+  require('telescope').extensions.menufacture.add_menu(require('telescope.builtin').find_files, {
+    [{ 'i', 'n' }] = {
+      ['<C-^>'] = vim.tbl_extend('force', require('telescope').extensions.menufacture.find_files_menu, {
+        ['change cwd to parent'] = function(opts, callback)
+          local cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
+          opts.cwd = vim.fn.fnamemodify(cwd, ':p:h:h')
+          callback(opts)
+        end,
+      }),
+    },
+  })
+)
+```
+
 # Menus available by default
 
 ## find_files
