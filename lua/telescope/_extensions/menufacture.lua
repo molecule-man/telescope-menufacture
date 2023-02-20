@@ -216,9 +216,16 @@ M.grep_string_menu = {
   ['change query'] = M.input('search', 'Query: '),
 }
 
+M.git_files_menu = {
+  ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
+  ['toggle show_untracked'] = M.toggle 'show_untracked',
+  ['toggle recurse_submodules'] = M.toggle 'recurse_submodules',
+}
+
 M.find_files = M.add_menu_with_default_mapping(builtin.find_files, M.find_files_menu)
 M.live_grep = M.add_menu_with_default_mapping(builtin.live_grep, M.live_grep_menu)
 M.grep_string = M.add_menu_with_default_mapping(builtin.grep_string, M.grep_string_menu)
+M.git_files = M.add_menu_with_default_mapping(builtin.git_files, M.git_files_menu)
 
 return telescope.register_extension {
   setup = function(opts)

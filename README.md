@@ -25,6 +25,7 @@ replace your standard `find_files` `grep_string` and `live_grep` mappings
 vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files)
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string)
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep)
+vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files)
 ```
 
 with the ones provided by this extension:
@@ -33,6 +34,8 @@ with the ones provided by this extension:
 vim.keymap.set('n', '<leader>sf', require('telescope').extensions.menufacture.find_files)
 vim.keymap.set('n', '<leader>sg', require('telescope').extensions.menufacture.live_grep)
 vim.keymap.set('n', '<leader>sw', require('telescope').extensions.menufacture.grep_string)
+vim.keymap.set('n', '<leader>gf', require('telescope').extensions.menufacture.git_files)
+
 ```
 
 then, while using this pickers, press `ctrl-^` (`ctrl-6`) and this will open the menu.
@@ -120,3 +123,11 @@ vim.keymap.set(
 | toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                |
 | toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs |
 | toggle use_regex                  | toggle option regulating whether to escape special characters                                      |
+
+## git_files
+
+| Menu item                         | Description                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| search relative to current buffer |                                                                                            |
+| toggle show_untracked             | toggle option regulating whether to add `--other` flag to command and show untracked files |
+| toggle recurse_submodules         | toggle option regulating whether to add `--recurse-submodules` flag to command             |
