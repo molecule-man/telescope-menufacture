@@ -37,39 +37,25 @@ vim.keymap.set('n', '<leader>sw', require('telescope').extensions.menufacture.gr
 
 then, while using this pickers, press `ctrl-^` (`ctrl-6`) and this will open the menu.
 
-## Use mapping other than ctrl-^
+# Configuration
 
-Let's say you want to use `ctrl-i` instead of `ctrl-^` then the setup should look like this:
+You can configure the `telescope-menufacture` like any other `telescope.nvim` extension.
+Here you can change the default mapping `ctrl-^` to something else.
 
 ```lua
-vim.keymap.set(
-  'n',
-  '<leader>sf',
-  require('telescope').extensions.menufacture.add_menu(require('telescope.builtin').find_files, {
-    [{ 'i', 'n' }] = {
-      ['<C-i>'] = require('telescope').extensions.menufacture.find_files_menu,
+require('telescope').setup {
+  extensions = {
+    menufacture = {
+      mappings = {
+        main_menu = { [{ 'i', 'n' }] = '<C-^>' },
+      },
     },
-  })
-)
-vim.keymap.set(
-  'n',
-  '<leader>sg',
-  require('telescope').extensions.menufacture.add_menu(require('telescope.builtin').live_grep, {
-    [{ 'i', 'n' }] = {
-      ['<C-i>'] = require('telescope').extensions.menufacture.live_grep_menu,
-    },
-  })
-)
-vim.keymap.set(
-  'n',
-  '<leader>sw',
-  require('telescope').extensions.menufacture.add_menu(require('telescope.builtin').grep_string, {
-    [{ 'i', 'n' }] = {
-      ['<C-i>'] = require('telescope').extensions.menufacture.grep_string_menu,
-    },
-  })
-)
+  },
+}
+
 ```
+
+# Customization
 
 ## Add your own menu item
 
@@ -79,18 +65,18 @@ It's possible to add your own menu items. To do that you have to extend (or crea
 vim.keymap.set(
   'n',
   '<leader>sf',
-  require('telescope').extensions.menufacture.add_menu(require('telescope.builtin').find_files, {
-    [{ 'i', 'n' }] = {
-      ['<C-^>'] = vim.tbl_extend('force', require('telescope').extensions.menufacture.find_files_menu, {
-        ['change cwd to parent'] = function(opts, callback)
-          local cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
-          opts.cwd = vim.fn.fnamemodify(cwd, ':p:h:h')
-          callback(opts)
-        end,
-      }),
-    },
-  })
+  require('telescope').extensions.menufacture.add_menu_with_default_mapping(
+    require('telescope.builtin').find_files,
+    vim.tbl_extend('force', require('telescope').extensions.menufacture.find_files_menu, {
+      ['change cwd to parent'] = function(opts, callback)
+        local cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
+        opts.cwd = vim.fn.fnamemodify(cwd, ':p:h:h')
+        callback(opts)
+      end,
+    })
+  )
 )
+
 ```
 
 # Menus available by default

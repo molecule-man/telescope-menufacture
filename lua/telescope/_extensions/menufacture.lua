@@ -15,7 +15,13 @@ local async_oneshot_finder = require 'telescope.finders.async_oneshot_finder'
 local scan = require 'plenary.scandir'
 local builtin = require 'telescope.builtin'
 
-local M = {}
+local M = {
+  config = {
+    mappings = {
+      main_menu = { [{ 'i', 'n' }] = '<C-^>' },
+    },
+  },
+}
 
 M.toggle = function(key)
   return function(opts, callback)
@@ -93,27 +99,29 @@ end
 
 M.search_in_directory = function(key)
   return function(opts, callback)
-    pickers.new({}, {
-      prompt_title = 'select directory',
-      finder = M.folder_finder(opts),
-      sorter = conf.generic_sorter {},
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          local dirs = {}
-          action_utils.map_selections(prompt_bufnr, function(entry)
-            table.insert(dirs, entry.path or entry.filename or entry.value)
+    pickers
+      .new({}, {
+        prompt_title = 'select directory',
+        finder = M.folder_finder(opts),
+        sorter = conf.generic_sorter {},
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            local dirs = {}
+            action_utils.map_selections(prompt_bufnr, function(entry)
+              table.insert(dirs, entry.path or entry.filename or entry.value)
+            end)
+            if vim.tbl_count(dirs) == 0 then
+              local entry = action_state.get_selected_entry()
+              table.insert(dirs, entry.path or entry.filename or entry.value)
+            end
+            actions.close(prompt_bufnr)
+            opts[key] = dirs
+            callback(opts)
           end)
-          if vim.tbl_count(dirs) == 0 then
-            local entry = action_state.get_selected_entry()
-            table.insert(dirs, entry.path or entry.filename or entry.value)
-          end
-          actions.close(prompt_bufnr)
-          opts[key] = dirs
-          callback(opts)
-        end)
-        return true
-      end,
-    }):find()
+          return true
+        end,
+      })
+      :find()
     return opts
   end
 end
@@ -129,21 +137,23 @@ M.add_menu = function(fn, menu)
           table.sort(action_entries)
           map(mode, key_bind, function(prompt_bufnr)
             opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-            pickers.new({}, {
-              prompt_title = 'actions',
-              finder = finders.new_table {
-                results = action_entries,
-              },
-              sorter = conf.generic_sorter {},
-              attach_mappings = function(prompt_bufnr)
-                actions.select_default:replace(function()
-                  actions.close(prompt_bufnr)
-                  local selection = action_state.get_selected_entry()
-                  menu_actions[selection[1]](opts, launch)
-                end)
-                return true
-              end,
-            }):find()
+            pickers
+              .new({}, {
+                prompt_title = 'actions',
+                finder = finders.new_table {
+                  results = action_entries,
+                },
+                sorter = conf.generic_sorter {},
+                attach_mappings = function(prompt_bufnr)
+                  actions.select_default:replace(function()
+                    actions.close(prompt_bufnr)
+                    local selection = action_state.get_selected_entry()
+                    menu_actions[selection[1]](opts, launch)
+                  end)
+                  return true
+                end,
+              })
+              :find()
           end)
         end
       end
@@ -157,6 +167,21 @@ M.add_menu = function(fn, menu)
   return launch
 end
 
+M.add_menu_with_default_mapping = function(fn, menu)
+  return function(opts)
+    local menus = {}
+
+    for mode, key_bind in pairs(M.config.mappings.main_menu) do
+      menus[mode] = {}
+      menus[mode][key_bind] = menu
+    end
+
+    vim.pretty_print(menus)
+
+    M.add_menu(fn, menus)(opts)
+  end
+end
+
 M.find_files_menu = {
   ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
   ['search by filename'] = M.input('search_file', 'Filename: '),
@@ -166,12 +191,6 @@ M.find_files_menu = {
   ['toggle follow'] = M.toggle 'follow',
   ['search in directory'] = M.search_in_directory 'search_dirs',
 }
-
-M.find_files = M.add_menu(builtin.find_files, {
-  [{ 'i', 'n' }] = {
-    ['<C-^>'] = M.find_files_menu,
-  },
-})
 
 M.live_grep_menu = {
   ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
@@ -185,12 +204,6 @@ M.live_grep_menu = {
   ['toggle follow'] = M.toggle_flag('additional_args', '-L'),
 }
 
-M.live_grep = M.add_menu(builtin.live_grep, {
-  [{ 'i', 'n' }] = {
-    ['<C-^>'] = M.live_grep_menu,
-  },
-})
-
 M.grep_string_menu = {
   ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
   ['search in directory'] = M.search_in_directory 'search_dirs',
@@ -203,12 +216,13 @@ M.grep_string_menu = {
   ['change query'] = M.input('search', 'Query: '),
 }
 
-M.grep_string = M.add_menu(builtin.grep_string, {
-  [{ 'i', 'n' }] = {
-    ['<C-^>'] = M.grep_string_menu,
-  },
-})
+M.find_files = M.add_menu_with_default_mapping(builtin.find_files, M.find_files_menu)
+M.live_grep = M.add_menu_with_default_mapping(builtin.live_grep, M.live_grep_menu)
+M.grep_string = M.add_menu_with_default_mapping(builtin.grep_string, M.grep_string_menu)
 
 return telescope.register_extension {
+  setup = function(opts)
+    M.config = vim.tbl_deep_extend('force', M.config, opts)
+  end,
   exports = M,
 }
