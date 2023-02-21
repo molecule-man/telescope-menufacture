@@ -176,8 +176,6 @@ M.add_menu_with_default_mapping = function(fn, menu)
       menus[mode][key_bind] = menu
     end
 
-    vim.pretty_print(menus)
-
     M.add_menu(fn, menus)(opts)
   end
 end
