@@ -135,20 +135,35 @@ M.add_menu = function(fn, menu)
         for key_bind, menu_actions in pairs(mode_map) do
           local action_entries = vim.tbl_keys(menu_actions)
           table.sort(action_entries)
+          local results = {}
+          for i, action in pairs(action_entries) do
+            table.insert(results, { string.format('%d: %s', i, action), action })
+          end
           map(mode, key_bind, function(prompt_bufnr)
             opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
             pickers
               .new({}, {
                 prompt_title = 'actions',
                 finder = finders.new_table {
-                  results = action_entries,
+                  results = results,
+                  entry_maker = function(entry)
+                    return {
+                      value = entry,
+                      display = entry[1],
+                      ordinal = entry[1],
+                    }
+                  end,
                 },
                 sorter = conf.generic_sorter {},
                 attach_mappings = function(prompt_bufnr)
                   actions.select_default:replace(function()
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
-                    menu_actions[selection[1]](opts, launch)
+                    if selection == nil then
+                      utils.__warn_no_selection 'menufacture'
+                      return
+                    end
+                    menu_actions[selection.value[2]](opts, launch)
                   end)
                   return true
                 end,
