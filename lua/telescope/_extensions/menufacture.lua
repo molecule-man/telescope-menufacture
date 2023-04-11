@@ -139,9 +139,10 @@ M.add_menu = function(fn, menu)
           for i, action in pairs(action_entries) do
             table.insert(results, { string.format('%d: %s', i, action), action })
           end
-          map(mode, key_bind, function(prompt_bufnr)
-            opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-            pickers
+          for _, value in pairs(mode) do
+            map(value, key_bind, function(prompt_bufnr)
+              opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+              pickers
               .new({}, {
                 prompt_title = 'actions',
                 finder = finders.new_table {
@@ -169,7 +170,8 @@ M.add_menu = function(fn, menu)
                 end,
               })
               :find()
-          end)
+            end)
+          end
         end
       end
 
