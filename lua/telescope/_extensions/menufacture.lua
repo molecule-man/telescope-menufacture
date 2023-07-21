@@ -129,8 +129,14 @@ end
 M.add_menu = function(fn, menu)
   local function launch(opts)
     opts = opts or {}
+    local user_attach_mappings = opts.attach_mappings
 
-    opts.attach_mappings = function(_, map)
+    opts.attach_mappings = function(bufnr, map)
+      local ret_val = true
+      if user_attach_mappings then
+        ret_val = user_attach_mappings(bufnr, map)
+      end
+
       for mode, mode_map in pairs(menu) do
         for key_bind, menu_actions in pairs(mode_map) do
           local action_entries = vim.tbl_keys(menu_actions)
@@ -143,39 +149,39 @@ M.add_menu = function(fn, menu)
             map(value, key_bind, function(prompt_bufnr)
               opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
               pickers
-              .new({}, {
-                prompt_title = 'actions',
-                finder = finders.new_table {
-                  results = results,
-                  entry_maker = function(entry)
-                    return {
-                      value = entry,
-                      display = entry[1],
-                      ordinal = entry[1],
-                    }
+                .new({}, {
+                  prompt_title = 'actions',
+                  finder = finders.new_table {
+                    results = results,
+                    entry_maker = function(entry)
+                      return {
+                        value = entry,
+                        display = entry[1],
+                        ordinal = entry[1],
+                      }
+                    end,
+                  },
+                  sorter = conf.generic_sorter {},
+                  attach_mappings = function(prompt_bufnr)
+                    actions.select_default:replace(function()
+                      actions.close(prompt_bufnr)
+                      local selection = action_state.get_selected_entry()
+                      if selection == nil then
+                        utils.__warn_no_selection 'menufacture'
+                        return
+                      end
+                      menu_actions[selection.value[2]](opts, launch)
+                    end)
+                    return true
                   end,
-                },
-                sorter = conf.generic_sorter {},
-                attach_mappings = function(prompt_bufnr)
-                  actions.select_default:replace(function()
-                    actions.close(prompt_bufnr)
-                    local selection = action_state.get_selected_entry()
-                    if selection == nil then
-                      utils.__warn_no_selection 'menufacture'
-                      return
-                    end
-                    menu_actions[selection.value[2]](opts, launch)
-                  end)
-                  return true
-                end,
-              })
-              :find()
+                })
+                :find()
             end)
           end
         end
       end
 
-      return true
+      return ret_val
     end
 
     fn(vim.tbl_extend('force', opts, { default_text = opts.prompt_value }))
