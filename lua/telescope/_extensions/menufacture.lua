@@ -100,28 +100,28 @@ end
 M.search_in_directory = function(key)
   return function(opts, callback)
     pickers
-      .new({}, {
-        prompt_title = 'select directory',
-        finder = M.folder_finder(opts),
-        sorter = conf.generic_sorter {},
-        attach_mappings = function(prompt_bufnr, _)
-          actions.select_default:replace(function()
-            local dirs = {}
-            action_utils.map_selections(prompt_bufnr, function(entry)
-              table.insert(dirs, entry.path or entry.filename or entry.value)
+        .new({}, {
+          prompt_title = 'select directory',
+          finder = M.folder_finder(opts),
+          sorter = conf.generic_sorter {},
+          attach_mappings = function(prompt_bufnr, _)
+            actions.select_default:replace(function()
+              local dirs = {}
+              action_utils.map_selections(prompt_bufnr, function(entry)
+                table.insert(dirs, entry.path or entry.filename or entry.value)
+              end)
+              if vim.tbl_count(dirs) == 0 then
+                local entry = action_state.get_selected_entry()
+                table.insert(dirs, entry.path or entry.filename or entry.value)
+              end
+              actions.close(prompt_bufnr)
+              opts[key] = dirs
+              callback(opts)
             end)
-            if vim.tbl_count(dirs) == 0 then
-              local entry = action_state.get_selected_entry()
-              table.insert(dirs, entry.path or entry.filename or entry.value)
-            end
-            actions.close(prompt_bufnr)
-            opts[key] = dirs
-            callback(opts)
-          end)
-          return true
-        end,
-      })
-      :find()
+            return true
+          end,
+        })
+        :find()
     return opts
   end
 end
@@ -149,35 +149,47 @@ M.add_menu = function(fn, menu)
             map(value, key_bind, function(prompt_bufnr)
               opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
               pickers
-                .new({}, {
-                  prompt_title = 'actions',
-                  finder = finders.new_table {
-                    results = results,
-                    entry_maker = function(entry)
-                      return {
-                        value = entry,
-                        display = entry[1],
-                        ordinal = entry[1],
-                      }
+                  .new({}, {
+                    prompt_title = 'actions',
+                    finder = finders.new_table {
+                      results = results,
+                      entry_maker = function(entry)
+                        return {
+                          value = entry,
+                          display = entry[1],
+                          ordinal = entry[1],
+                        }
+                      end,
+                    },
+                    sorter = conf.generic_sorter {},
+                    attach_mappings = function(prompt_bufnr)
+                      actions.select_default:replace(function()
+                        actions.close(prompt_bufnr)
+                        local selection = action_state.get_selected_entry()
+                        if selection == nil then
+                          utils.__warn_no_selection 'menufacture'
+                          return
+                        end
+                        menu_actions[selection.value[2]](opts, launch)
+                      end)
+                      return true
                     end,
-                  },
-                  sorter = conf.generic_sorter {},
-                  attach_mappings = function(prompt_bufnr)
-                    actions.select_default:replace(function()
-                      actions.close(prompt_bufnr)
-                      local selection = action_state.get_selected_entry()
-                      if selection == nil then
-                        utils.__warn_no_selection 'menufacture'
-                        return
-                      end
-                      menu_actions[selection.value[2]](opts, launch)
-                    end)
-                    return true
-                  end,
-                })
-                :find()
+                  })
+                  :find()
             end)
           end
+        end
+      end
+
+      menufacture_obj = opts.menufacture or {}
+      mappings = menufacture_obj.mappings or {}
+      for mode, binding in pairs(mappings) do
+        for key, action in pairs(binding) do
+          map(mode, key, function(prompt_bufnr)
+            opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+            actions.close(prompt_bufnr)
+            action(opts, launch)
+          end)
         end
       end
 
@@ -203,45 +215,120 @@ M.add_menu_with_default_mapping = function(fn, menu)
   end
 end
 
-M.find_files_menu = {
-  ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
-  ['search by filename'] = M.input('search_file', 'Filename: '),
-  ['toggle hidden'] = M.toggle 'hidden',
-  ['toggle no_ignore'] = M.toggle 'no_ignore',
-  ['toggle no_ignore_parent'] = M.toggle 'no_ignore_parent',
-  ['toggle follow'] = M.toggle 'follow',
-  ['search in directory'] = M.search_in_directory 'search_dirs',
+M.menu_actions = {
+  search_relative_to_current_buffer = {
+    action = M.set_cwd_to_current_buffer,
+    text = 'search relative to current buffer',
+  },
+  search_by_filename = {
+    action = M.input('search_file', 'Filename: '),
+    text = 'search by filename',
+  },
+  toggle_hidden = {
+    action = M.toggle 'hidden',
+    text = 'toggle hidden',
+  },
+  toggle_no_ignore = {
+    action = M.toggle 'no_ignore',
+    text = 'toggle no_ignore',
+  },
+  toggle_no_ignore_parent = {
+    action = M.toggle 'no_ignore_parent',
+    text = 'toggle no_ignore_parent',
+  },
+  toggle_follow = {
+    action = M.toggle 'follow',
+    text = 'toggle follow',
+  },
+  search_in_directory = {
+    action = M.search_in_directory 'search_dirs',
+    text = 'search in directory',
+  },
+  toggle_flag_hidden = {
+    action = M.toggle_flag('additional_args', '--hidden'),
+    text = 'toggle hidden',
+  },
+  toggle_flag_no_ignore = {
+    action = M.toggle_flag('additional_args', '--no-ignore'),
+    text = 'toggle no_ignore',
+  },
+  toggle_flag_no_ignore_parent = {
+    action = M.toggle_flag('additional_args', '--no-ignore-parent'),
+    text = 'toggle no_ignore_parent',
+  },
+  toggle_flag_follow = {
+    action = M.toggle_flag('additional_args', '-L'),
+    text = 'toggle follow',
+  },
+  toggle_grep_open_files = {
+    action = M.toggle 'grep_open_files',
+    text = 'toggle grep_open_files',
+  },
+  toggle_use_regex = {
+    action = M.toggle 'use_regex',
+    text = 'toggle use_regex',
+  },
+  change_glob_pattern = {
+    action = M.input('glob_pattern', 'Glob pattern: '),
+    text = 'change glob_pattern',
+  },
+  change_type_filter = {
+    action = M.input('type_filter', 'Type filter: '),
+    text = 'change type_filter',
+  },
+  change_query = {
+    action = M.input('search', 'Query: '),
+    text = 'change query',
+  },
+  toggle_show_untracked = {
+    action = M.toggle 'show_untracked',
+    text = 'toggle show_untracked',
+  },
+  toggle_recurse_submodules = {
+    action = M.toggle 'recurse_submodules',
+    text = 'toggle recurse_submodules',
+  },
 }
 
-M.live_grep_menu = {
-  ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
-  ['search in directory'] = M.search_in_directory 'search_dirs',
-  ['toggle grep_open_files'] = M.toggle 'grep_open_files',
-  ['change glob_pattern'] = M.input('glob_pattern', 'Glob pattern: '),
-  ['change type_filter'] = M.input('type_filter', 'Type filter: '),
-  ['toggle hidden'] = M.toggle_flag('additional_args', '--hidden'),
-  ['toggle no_ignore'] = M.toggle_flag('additional_args', '--no-ignore'),
-  ['toggle no_ignore_parent'] = M.toggle_flag('additional_args', '--no-ignore-parent'),
-  ['toggle follow'] = M.toggle_flag('additional_args', '-L'),
-}
+local set_menu = function(menu, menu_action)
+  menu[menu_action.text] = menu_action.action
+end
 
-M.grep_string_menu = {
-  ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
-  ['search in directory'] = M.search_in_directory 'search_dirs',
-  ['toggle grep_open_files'] = M.toggle 'grep_open_files',
-  ['toggle use_regex'] = M.toggle 'use_regex',
-  ['toggle hidden'] = M.toggle_flag('additional_args', '--hidden'),
-  ['toggle no_ignore'] = M.toggle_flag('additional_args', '--no-ignore'),
-  ['toggle no_ignore_parent'] = M.toggle_flag('additional_args', '--no-ignore-parent'),
-  ['toggle follow'] = M.toggle_flag('additional_args', '-L'),
-  ['change query'] = M.input('search', 'Query: '),
-}
+M.find_files_menu = {}
+set_menu(M.find_files_menu, M.menu_actions.search_relative_to_current_buffer)
+set_menu(M.find_files_menu, M.menu_actions.search_by_filename)
+set_menu(M.find_files_menu, M.menu_actions.toggle_hidden)
+set_menu(M.find_files_menu, M.menu_actions.toggle_no_ignore)
+set_menu(M.find_files_menu, M.menu_actions.toggle_no_ignore_parent)
+set_menu(M.find_files_menu, M.menu_actions.toggle_follow)
+set_menu(M.find_files_menu, M.menu_actions.search_in_directory)
 
-M.git_files_menu = {
-  ['search relative to current buffer'] = M.set_cwd_to_current_buffer,
-  ['toggle show_untracked'] = M.toggle 'show_untracked',
-  ['toggle recurse_submodules'] = M.toggle 'recurse_submodules',
-}
+M.live_grep_menu = {}
+set_menu(M.live_grep_menu, M.menu_actions.search_relative_to_current_buffer)
+set_menu(M.live_grep_menu, M.menu_actions.search_in_directory)
+set_menu(M.live_grep_menu, M.menu_actions.toggle_grep_open_files)
+set_menu(M.live_grep_menu, M.menu_actions.change_glob_pattern)
+set_menu(M.live_grep_menu, M.menu_actions.change_type_filter)
+set_menu(M.live_grep_menu, M.menu_actions.toggle_flag_hidden)
+set_menu(M.live_grep_menu, M.menu_actions.toggle_flag_no_ignore)
+set_menu(M.live_grep_menu, M.menu_actions.toggle_flag_no_ignore_parent)
+set_menu(M.live_grep_menu, M.menu_actions.toggle_flag_follow)
+
+M.grep_string_menu = {}
+set_menu(M.grep_string_menu, M.menu_actions.search_relative_to_current_buffer)
+set_menu(M.grep_string_menu, M.menu_actions.search_in_directory)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_grep_open_files)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_use_regex)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_flag_hidden)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_flag_no_ignore)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_flag_no_ignore_parent)
+set_menu(M.grep_string_menu, M.menu_actions.toggle_flag_follow)
+set_menu(M.grep_string_menu, M.menu_actions.change_query)
+
+M.git_files_menu = {}
+set_menu(M.git_files_menu, M.menu_actions.search_relative_to_current_buffer)
+set_menu(M.git_files_menu, M.menu_actions.toggle_show_untracked)
+set_menu(M.git_files_menu, M.menu_actions.toggle_recurse_submodules)
 
 M.find_files = M.add_menu_with_default_mapping(builtin.find_files, M.find_files_menu)
 M.live_grep = M.add_menu_with_default_mapping(builtin.live_grep, M.live_grep_menu)

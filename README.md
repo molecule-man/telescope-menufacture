@@ -60,6 +60,31 @@ require('telescope').setup {
 
 # Customization
 
+## Add direct mapping to invoke menu actions
+
+It's possible to specify mappings that can invoke menufacture menu actions
+directly (without telescope picker that allows you to select the menu item):
+
+```lua
+vim.keymap.set('n', '<leader>sg', function()
+  telescope.extensions.menufacture.live_grep {
+    menufacture = {
+      mappings = {
+        -- [{ 'i', 'n' }] = {
+        i = {
+          ['<c-d>'] = telescope.extensions.menufacture.menu_actions.search_in_directory.action,
+        },
+      },
+    },
+  }
+end, { desc = '[S]earch using [G]rep (live_grep)' })
+```
+
+In this example ctrl-d should invoke `search_in_directory` action as if you
+selected it in menu picker. `search_in_directory` is only one of multiple
+actions that can be mapped. Full list of actions can be found in `menu_action`
+column in the tables in [the next section](#menus-available-by-default).
+
 ## Add your own menu item
 
 It's possible to add your own menu items. To do that you have to extend (or create new one from scratch) the list of menu items with your additional menu entries and corresponding actions. The action takes picker's `opts` as the first argument and `callback` as the second argument. The `callback` must be called with `opts` in the end of the action. Let's add menu item that changes `cwd` to the parent of the current `cwd`:
@@ -86,48 +111,48 @@ vim.keymap.set(
 
 ## find_files
 
-| Menu item                         | Description                                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| search by filename                | specify a filename to search for                                                                   |
-| search in directory               | specify directory/directories/files to search in                                                   |
-| search relative to current buffer |                                                                                                    |
-| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   |
-| toggle hidden                     | toggle option regulating whether to show hidden files                                              |
-| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                |
-| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs |
+| Menu item                         | Description                                                                                        | menu_action                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| search by filename                | specify a filename to search for                                                                   | search_by_filename |
+| search in directory               | specify directory/directories/files to search in                                                   | search_in_directory |
+| search relative to current buffer |                                                                                                    | search_relative_to_current_buffer |
+| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   | toggle_follow |
+| toggle hidden                     | toggle option regulating whether to show hidden files                                              | toggle_hidden |
+| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                | toggle_no_ignore |
+| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs | toggle_no_ignore_parent |
 
 ## live_grep
 
-| Menu item                         | Description                                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| change glob_pattern               | specify argument to be used with `--glob`, e.g. "*.toml", or the opposite "!*.toml"                |
-| change type_filter                | specify argument to be used with `--type`, e.g. "rust"                                             |
-| search in directory               | specify directory/directories/files to search in                                                   |
-| search relative to current buffer |                                                                                                    |
-| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   |
-| toggle grep_open_files            | toggle option regulating whether to restrict search to open files only                             |
-| toggle hidden                     | toggle option regulating whether to show hidden files                                              |
-| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                |
-| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs |
+| Menu item                         | Description                                                                                        | menu_action                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| change glob_pattern               | specify argument to be used with `--glob`, e.g. "*.toml", or the opposite "!*.toml"                | change_glob_pattern |
+| change type_filter                | specify argument to be used with `--type`, e.g. "rust"                                             | change_type_filter |
+| search in directory               | specify directory/directories/files to search in                                                   | search_in_directory |
+| search relative to current buffer |                                                                                                    | search_relative_to_current_buffer |
+| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   | toggle_flag_follow |
+| toggle grep_open_files            | toggle option regulating whether to restrict search to open files only                             | toggle_grep_open_files |
+| toggle hidden                     | toggle option regulating whether to show hidden files                                              | toggle_flag_hidden |
+| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                | toggle_flag_no_ignore |
+| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs | toggle_flag_no_ignore_parent |
 
 ## grep_string
 
-| Menu item                         | Description                                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| change query                      |                                                                                                    |
-| search in directory               | specify directory/directories/files to search in                                                   |
-| search relative to current buffer |                                                                                                    |
-| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   |
-| toggle grep_open_files            | toggle option regulating whether to restrict search to open files only                             |
-| toggle hidden                     | toggle option regulating whether to show hidden files                                              |
-| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                |
-| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs |
-| toggle use_regex                  | toggle option regulating whether to escape special characters                                      |
+| Menu item                         | Description                                                                                        | menu_action                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| change query                      |                                                                                                    | change_query |
+| search in directory               | specify directory/directories/files to search in                                                   | search_in_directory |
+| search relative to current buffer |                                                                                                    | search_relative_to_current_buffer |
+| toggle follow                     | toggle option regulating whether to follow symlinks (i.e. uses `-L` flag for the `find` command)   | toggle_flag_follow |
+| toggle grep_open_files            | toggle option regulating whether to restrict search to open files only                             | toggle_grep_open_files |
+| toggle hidden                     | toggle option regulating whether to show hidden files                                              | toggle_flag_hidden |
+| toggle no_ignore                  | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc.                | toggle_flag_no_ignore |
+| toggle no_ignore_parent           | toggle option regulating whether to show files ignored by .gitignore, .ignore, etc. in parent dirs | toggle_flag_no_ignore_parent |
+| toggle use_regex                  | toggle option regulating whether to escape special characters                                      | toggle_use_regex |
 
 ## git_files
 
-| Menu item                         | Description                                                                                |
-| --------------------------------- | ------------------------------------------------------------------------------------------ |
-| search relative to current buffer |                                                                                            |
-| toggle show_untracked             | toggle option regulating whether to add `--other` flag to command and show untracked files |
-| toggle recurse_submodules         | toggle option regulating whether to add `--recurse-submodules` flag to command             |
+| Menu item                         | Description                                                                                | menu_action                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
+| search relative to current buffer |                                                                                            | search_relative_to_current_buffer |
+| toggle show_untracked             | toggle option regulating whether to add `--other` flag to command and show untracked files | toggle_show_untracked |
+| toggle recurse_submodules         | toggle option regulating whether to add `--recurse-submodules` flag to command             | toggle_recurse_submodules |
