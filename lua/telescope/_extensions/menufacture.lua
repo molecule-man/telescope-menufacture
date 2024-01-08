@@ -137,8 +137,12 @@ M.add_menu = function(fn, menu)
         ret_val = user_attach_mappings(bufnr, map)
       end
 
+      local all_actions = {}
+
       for mode, mode_map in pairs(menu) do
         for key_bind, menu_actions in pairs(mode_map) do
+          all_actions = vim.tbl_extend('force', all_actions, getmetatable(menu_actions).actions)
+
           local action_entries = vim.tbl_keys(menu_actions)
           table.sort(action_entries)
           local results = {}
@@ -181,15 +185,25 @@ M.add_menu = function(fn, menu)
         end
       end
 
-      menufacture_obj = opts.menufacture or {}
-      mappings = menufacture_obj.mappings or {}
+      local action_mapper = function(action)
+        return function(prompt_bufnr)
+          opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+          actions.close(prompt_bufnr)
+          action(opts, launch)
+        end
+      end
+
+      for action_name, mappings in pairs(M.config.mappings) do
+        for mode, key in pairs(mappings) do
+          map(mode, key, action_mapper(all_actions[action_name]))
+        end
+      end
+
+      local menufacture_obj = opts.menufacture or {}
+      local mappings = menufacture_obj.mappings or {}
       for mode, binding in pairs(mappings) do
         for key, action in pairs(binding) do
-          map(mode, key, function(prompt_bufnr)
-            opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-            actions.close(prompt_bufnr)
-            action(opts, launch)
-          end)
+          map(mode, key, action_mapper(action))
         end
       end
 
@@ -245,18 +259,22 @@ M.menu_actions = {
     text = 'search in directory',
   },
   toggle_flag_hidden = {
+    action_name = 'toggle_hidden',
     action = M.toggle_flag('additional_args', '--hidden'),
     text = 'toggle hidden',
   },
   toggle_flag_no_ignore = {
+    action_name = 'toggle_no_ignore',
     action = M.toggle_flag('additional_args', '--no-ignore'),
     text = 'toggle no_ignore',
   },
   toggle_flag_no_ignore_parent = {
+    action_name = 'toggle_no_ignore_parent',
     action = M.toggle_flag('additional_args', '--no-ignore-parent'),
     text = 'toggle no_ignore_parent',
   },
   toggle_flag_follow = {
+    action_name = 'toggle_follow',
     action = M.toggle_flag('additional_args', '-L'),
     text = 'toggle follow',
   },
@@ -290,8 +308,17 @@ M.menu_actions = {
   },
 }
 
-local set_menu = function(menu, menu_action)
-  menu[menu_action.text] = menu_action.action
+for default_action_name, menu_action_info in pairs(M.menu_actions) do
+  menu_action_info.action_name = menu_action_info.action_name or default_action_name
+end
+
+local set_menu = function(menu, menu_action_info)
+  menu[menu_action_info.text] = menu_action_info.action
+
+  local meta = getmetatable(menu) or {}
+  meta.actions = meta.actions or {}
+  meta.actions[menu_action_info.action_name] = menu_action_info.action
+  setmetatable(menu, meta)
 end
 
 M.find_files_menu = {}

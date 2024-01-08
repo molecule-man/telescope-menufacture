@@ -51,6 +51,10 @@ require('telescope').setup {
     menufacture = {
       mappings = {
         main_menu = { [{ 'i', 'n' }] = '<C-^>' },
+        -- it's possible to assign direct mappings to menu item actions here.
+        -- List of available actions can be found in the table in the end of
+        -- README
+        -- toggle_hidden = { i = '<C-h>' },
       },
     },
   },
