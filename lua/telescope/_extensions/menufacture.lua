@@ -137,17 +137,21 @@ M.add_menu = function(fn, menu)
         ret_val = user_attach_mappings(bufnr, map)
       end
 
-      local all_actions = {}
+      local actions_indexed_by_name = {}
 
       for mode, mode_map in pairs(menu) do
         for key_bind, menu_actions in pairs(mode_map) do
-          all_actions = vim.tbl_extend('force', all_actions, getmetatable(menu_actions).actions or {})
-
           local action_entries = vim.tbl_keys(menu_actions)
           table.sort(action_entries)
           local results = {}
-          for i, action in pairs(action_entries) do
-            table.insert(results, { string.format('%d: %s', i, action), action })
+          for i, action_text in pairs(action_entries) do
+            table.insert(results, { string.format('%d: %s', i, action_text), action_text })
+            local action_info = menu_actions[action_text]
+            if type(action_info) == 'function' then
+              action_info = { action = action_info, text = action_text, action_name = action_text:gsub('%s+', '_') }
+              menu_actions[action_text] = action_info
+            end
+            actions_indexed_by_name[action_info.action_name] = action_info.action
           end
           for _, value in pairs(mode) do
             map(value, key_bind, function(prompt_bufnr)
@@ -174,7 +178,7 @@ M.add_menu = function(fn, menu)
                           utils.__warn_no_selection 'menufacture'
                           return
                         end
-                        menu_actions[selection.value[2]](opts, launch)
+                        menu_actions[selection.value[2]].action(opts, launch)
                       end)
                       return true
                     end,
@@ -195,7 +199,9 @@ M.add_menu = function(fn, menu)
 
       for action_name, mappings in pairs(M.config.mappings) do
         for mode, key in pairs(mappings) do
-          map(mode, key, action_mapper(all_actions[action_name]))
+          if actions_indexed_by_name[action_name] then
+            map(mode, key, action_mapper(actions_indexed_by_name[action_name]))
+          end
         end
       end
 
@@ -313,12 +319,7 @@ for default_action_name, menu_action_info in pairs(M.menu_actions) do
 end
 
 local set_menu = function(menu, menu_action_info)
-  menu[menu_action_info.text] = menu_action_info.action
-
-  local meta = getmetatable(menu) or {}
-  meta.actions = meta.actions or {}
-  meta.actions[menu_action_info.action_name] = menu_action_info.action
-  setmetatable(menu, meta)
+  menu[menu_action_info.text] = menu_action_info
 end
 
 M.find_files_menu = {}
