@@ -141,7 +141,7 @@ M.add_menu = function(fn, menu)
 
       for mode, mode_map in pairs(menu) do
         for key_bind, menu_actions in pairs(mode_map) do
-          all_actions = vim.tbl_extend('force', all_actions, getmetatable(menu_actions).actions)
+          all_actions = vim.tbl_extend('force', all_actions, getmetatable(menu_actions).actions or {})
 
           local action_entries = vim.tbl_keys(menu_actions)
           table.sort(action_entries)
