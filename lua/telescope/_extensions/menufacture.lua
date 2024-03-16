@@ -184,7 +184,7 @@ M.add_menu = function(fn, menu)
                     end,
                   })
                   :find()
-            end)
+            end, { desc = 'menufacture|launch_menu' })
           end
         end
       end
@@ -200,7 +200,7 @@ M.add_menu = function(fn, menu)
       for action_name, mappings in pairs(M.config.mappings) do
         for mode, key in pairs(mappings) do
           if actions_indexed_by_name[action_name] then
-            map(mode, key, action_mapper(actions_indexed_by_name[action_name]))
+            map(mode, key, action_mapper(actions_indexed_by_name[action_name]), { desc = 'menufacture|' .. action_name })
           end
         end
       end
