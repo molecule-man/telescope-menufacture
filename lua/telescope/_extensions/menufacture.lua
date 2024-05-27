@@ -100,28 +100,28 @@ end
 M.search_in_directory = function(key)
   return function(opts, callback)
     pickers
-        .new({}, {
-          prompt_title = 'select directory',
-          finder = M.folder_finder(opts),
-          sorter = conf.generic_sorter {},
-          attach_mappings = function(prompt_bufnr, _)
-            actions.select_default:replace(function()
-              local dirs = {}
-              action_utils.map_selections(prompt_bufnr, function(entry)
-                table.insert(dirs, entry.path or entry.filename or entry.value)
-              end)
-              if vim.tbl_count(dirs) == 0 then
-                local entry = action_state.get_selected_entry()
-                table.insert(dirs, entry.path or entry.filename or entry.value)
-              end
-              actions.close(prompt_bufnr)
-              opts[key] = dirs
-              callback(opts)
+      .new({}, {
+        prompt_title = 'select directory',
+        finder = M.folder_finder(opts),
+        sorter = conf.generic_sorter {},
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            local dirs = {}
+            action_utils.map_selections(prompt_bufnr, function(entry)
+              table.insert(dirs, entry.path or entry.filename or entry.value)
             end)
-            return true
-          end,
-        })
-        :find()
+            if vim.tbl_count(dirs) == 0 then
+              local entry = action_state.get_selected_entry()
+              table.insert(dirs, entry.path or entry.filename or entry.value)
+            end
+            actions.close(prompt_bufnr)
+            opts[key] = dirs
+            callback(opts)
+          end)
+          return true
+        end,
+      })
+      :find()
     return opts
   end
 end
@@ -157,33 +157,33 @@ M.add_menu = function(fn, menu)
             map(value, key_bind, function(prompt_bufnr)
               opts.prompt_value = action_state.get_current_picker(prompt_bufnr):_get_prompt()
               pickers
-                  .new({}, {
-                    prompt_title = 'actions',
-                    finder = finders.new_table {
-                      results = results,
-                      entry_maker = function(entry)
-                        return {
-                          value = entry,
-                          display = entry[1],
-                          ordinal = entry[1],
-                        }
-                      end,
-                    },
-                    sorter = conf.generic_sorter {},
-                    attach_mappings = function(prompt_bufnr)
-                      actions.select_default:replace(function()
-                        actions.close(prompt_bufnr)
-                        local selection = action_state.get_selected_entry()
-                        if selection == nil then
-                          utils.__warn_no_selection 'menufacture'
-                          return
-                        end
-                        menu_actions[selection.value[2]].action(opts, launch)
-                      end)
-                      return true
+                .new({}, {
+                  prompt_title = 'actions',
+                  finder = finders.new_table {
+                    results = results,
+                    entry_maker = function(entry)
+                      return {
+                        value = entry,
+                        display = entry[1],
+                        ordinal = entry[1],
+                      }
                     end,
-                  })
-                  :find()
+                  },
+                  sorter = conf.generic_sorter {},
+                  attach_mappings = function(prompt_bufnr)
+                    actions.select_default:replace(function()
+                      actions.close(prompt_bufnr)
+                      local selection = action_state.get_selected_entry()
+                      if selection == nil then
+                        utils.__warn_no_selection 'menufacture'
+                        return
+                      end
+                      menu_actions[selection.value[2]].action(opts, launch)
+                    end)
+                    return true
+                  end,
+                })
+                :find()
             end, { desc = 'menufacture|launch_menu' })
           end
         end
@@ -312,6 +312,14 @@ M.menu_actions = {
     action = M.toggle 'recurse_submodules',
     text = 'toggle recurse_submodules',
   },
+  toggle_include_current_session = {
+    action = M.toggle 'include_current_session',
+    text = 'toggle include_current_session',
+  },
+  toggle_cwd_only = {
+    action = M.toggle 'cwd_only',
+    text = 'toggle cwd_only',
+  },
 }
 
 for default_action_name, menu_action_info in pairs(M.menu_actions) do
@@ -358,10 +366,16 @@ set_menu(M.git_files_menu, M.menu_actions.search_relative_to_current_buffer)
 set_menu(M.git_files_menu, M.menu_actions.toggle_show_untracked)
 set_menu(M.git_files_menu, M.menu_actions.toggle_recurse_submodules)
 
+M.oldfiles_menu = {}
+set_menu(M.oldfiles_menu, M.menu_actions.search_relative_to_current_buffer)
+set_menu(M.oldfiles_menu, M.menu_actions.toggle_include_current_session)
+set_menu(M.oldfiles_menu, M.menu_actions.toggle_cwd_only)
+
 M.find_files = M.add_menu_with_default_mapping(builtin.find_files, M.find_files_menu)
 M.live_grep = M.add_menu_with_default_mapping(builtin.live_grep, M.live_grep_menu)
 M.grep_string = M.add_menu_with_default_mapping(builtin.grep_string, M.grep_string_menu)
 M.git_files = M.add_menu_with_default_mapping(builtin.git_files, M.git_files_menu)
+M.oldfiles = M.add_menu_with_default_mapping(builtin.oldfiles, M.oldfiles_menu)
 
 return telescope.register_extension {
   setup = function(opts)

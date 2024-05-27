@@ -26,6 +26,7 @@ vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files)
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string)
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep)
 vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files)
+vim.keymap.set('n', '<leader>so', require('telescope.builtin').oldfiles)
 ```
 
 with the ones provided by this extension:
@@ -35,6 +36,7 @@ vim.keymap.set('n', '<leader>sf', require('telescope').extensions.menufacture.fi
 vim.keymap.set('n', '<leader>sg', require('telescope').extensions.menufacture.live_grep)
 vim.keymap.set('n', '<leader>sw', require('telescope').extensions.menufacture.grep_string)
 vim.keymap.set('n', '<leader>gf', require('telescope').extensions.menufacture.git_files)
+vim.keymap.set('n', '<leader>so', require('telescope').extensions.menufacture.oldfiles)
 
 ```
 
@@ -160,3 +162,11 @@ vim.keymap.set(
 | search relative to current buffer |                                                                                            | search_relative_to_current_buffer |
 | toggle show_untracked             | toggle option regulating whether to add `--other` flag to command and show untracked files | toggle_show_untracked |
 | toggle recurse_submodules         | toggle option regulating whether to add `--recurse-submodules` flag to command             | toggle_recurse_submodules |
+
+## oldfiles
+
+| Menu item                         | menu_action                       |
+| --------------------------------- | --------------------------------- |
+| search relative to current buffer | search_relative_to_current_buffer |
+| toggle include_current_session    | toggle_include_current_session    |
+| toggle cwd_only                   | toggle_cwd_only                   |
