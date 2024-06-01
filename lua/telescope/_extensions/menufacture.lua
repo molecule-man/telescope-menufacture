@@ -71,7 +71,7 @@ M.folder_finder = function(opts)
   local cwd = vim.fn.expand(opts.cwd or vim.loop.cwd())
   local entry_maker = make_entry.gen_from_file(opts)
   if 1 == vim.fn.executable 'fd' then
-    local args = { '-t', 'd', '-a' }
+    local args = { '-t', 'd' }
     if opts.hidden then
       table.insert(args, '-H')
     end
