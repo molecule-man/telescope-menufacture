@@ -72,11 +72,11 @@ M.folder_finder = function(opts)
   local entry_maker = make_entry.gen_from_file(opts)
   if 1 == vim.fn.executable 'fd' then
     local args = { '-t', 'd' }
-    if opts.hidden then
+    if opts.hidden or opts['flag_additional_args--hidden'] then
       table.insert(args, '-H')
     end
-    if opts.no_ignore then
-      table.insert(args, '--no-ignore-vcs')
+    if opts.no_ignore or opts['flag_additional_args--no-ignore'] then
+      table.insert(args, '--no-ignore')
     end
     return async_oneshot_finder {
       fn_command = function()
