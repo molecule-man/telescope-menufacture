@@ -156,8 +156,9 @@ M.add_menu = function(fn, menu)
         end
       end
 
-      if vim.tbl_count(flags) > 0 then
-        opts.prompt_title = opts.original_prompt_title .. ' [' .. table.concat(flags, ' ') .. ']'
+      opts.prompt_title = opts.original_prompt_title
+      if #flags > 0 then
+        opts.prompt_title = opts.prompt_title .. ' [' .. table.concat(flags, ' ') .. ']'
       end
     end
 
